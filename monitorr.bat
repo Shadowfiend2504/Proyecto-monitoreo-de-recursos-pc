@@ -1,6 +1,4 @@
 @echo off
-
-@echo off
 :loop
 setlocal enabledelayedexpansion
 
@@ -54,7 +52,7 @@ echo Disco !Drive!: !Porcentaje!%% de uso >> %ARCHIVO_SALIDA%
 echo. >> %ARCHIVO_SALIDA%
 echo Uso de la GPU: >> %ARCHIVO_SALIDA%
 where nvidia-smi > nul 2>nul
-if !errorlevel!==0 (
+if "!errorlevel!" equ "0" (
     echo Información de la GPU NVIDIA: >> %ARCHIVO_SALIDA%
     nvidia-smi --query-gpu=name,utilization.gpu,memory.used,memory.free --format=csv,noheader >> %ARCHIVO_SALIDA%
 	for /f "delims=" %%A in ('nvidia-smi --query-gpu=utilization.gpu --format=csv') do (
@@ -63,6 +61,7 @@ if !errorlevel!==0 (
 ) else (
     echo No se detectó una GPU NVIDIA. Intentando con wmic... >> %ARCHIVO_SALIDA%
     wmic path win32_videocontroller get caption,loadpercentage >> %ARCHIVO_SALIDA%
+	set gpu_utilization=0
 )
 
 echo. >> %ARCHIVO_SALIDA%
@@ -82,20 +81,26 @@ WshShell.Run """C:\Proyecto analisis\monitorr.bat""", 0, False
 
 set DesktopPath=%USERPROFILE%\Desktop
 
-if %CPU% geq 90 (
-    powershell -Command "$Shortcut = (New-Object -COM WScript.Shell).CreateShortcut('%DesktopPath%\Alerta.lnk'); $Shortcut.TargetPath = 'C:\Proyecto analisis\reporte_recursos.txt'; $Shortcut.IconLocation = 'C:\Proyecto analisis\alerta.ico'; $Shortcut.Save()"
-)
-if %UsedMem% geq 90 (
+
+if "%CPU%" geq "90" (
 	powershell -Command "$Shortcut = (New-Object -COM WScript.Shell).CreateShortcut('%DesktopPath%\Alerta.lnk'); $Shortcut.TargetPath = 'C:\Proyecto analisis\reporte_recursos.txt'; $Shortcut.IconLocation = 'C:\Proyecto analisis\alerta.ico'; $Shortcut.Save()"
+	cscript "C:\Proyecto analisis\alerta.vbs"
 )
-if %Porcentaje% geq 80 (
+if "%UsedMem%" geq "90" (
 	powershell -Command "$Shortcut = (New-Object -COM WScript.Shell).CreateShortcut('%DesktopPath%\Alerta.lnk'); $Shortcut.TargetPath = 'C:\Proyecto analisis\reporte_recursos.txt'; $Shortcut.IconLocation = 'C:\Proyecto analisis\alerta.ico'; $Shortcut.Save()"
+	cscript "C:\Proyecto analisis\alerta.vbs"
 )
-if %gpu_utilization% geq 80 (
+if "%Porcentaje%" geq "80" (
+	powershell -Command "$Shortcut = (New-Object -COM WScript.Shell).CreateShortcut('%DesktopPath%\Alerta.lnk'); $Shortcut.TargetPath = 'C:\Proyecto analisis\reporte_recursos.txt'; $Shortcut.IconLocation = 'C:\Proyecto analisis\alerta.ico'; $Shortcut.Save()"
+	cscript "C:\Proyecto analisis\alerta.vbs"
+)
+if "%gpu_utilization%" geq "80" (
 	powershell -Command "$Shortcut = (New-Object -COM WScript.Shell).CreateShortcut('%DesktopPath%\Alerta.lnk); $Shortcut.TargetPath = 'C:\Proyecto analisis\reporte_recursos.txt'; $Shortcut.IconLocation = 'C:\Proyecto analisis\alerta.ico'; $Shortcut.Save()"
+	cscript "C:\Proyecto analisis\alerta.vbs"
 )
 
-timeout /t 300 /nobreak >nul
+timeout /t 600 /nobreak >nul
+goto loop
 
 
 endlocal
